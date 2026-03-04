@@ -1,0 +1,176 @@
+<!-- LOGIN REGISTER -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SMETrack – Sign In</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    /* Auth-page only layout */
+    body { display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+    .page-wrap { position: relative; z-index: 1; width: 100%; max-width: 480px; padding: 24px; }
+  </style>
+</head>
+<body>
+<div class="bg-grid"></div>
+
+<div class="page-wrap">
+
+  <!-- Brand -->
+  <div class="brand">
+    <a href="#" class="brand-logo">
+      <div class="brand-icon">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+      </div>
+      <span class="brand-name">SME<span>Track</span></span>
+    </a>
+    <span class="brand-tagline">AI-Based Financial Planning for SMEs</span>
+  </div>
+
+  <!-- Card -->
+  <div class="card">
+    <div class="tab-group" role="tablist">
+      <button class="tab-btn active" id="tab-login" role="tab" onclick="switchTab('login')">Sign In</button>
+      <button class="tab-btn" id="tab-register" role="tab" onclick="switchTab('register')">Create Account</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <form class="form visible" id="form-login" novalidate onsubmit="handleLogin(event)">
+      <div class="form-header">
+        <div class="form-title">Welcome back 👋</div>
+        <div class="form-subtitle">Sign in to your SMETrack dashboard</div>
+      </div>
+
+      <div class="field" id="field-login-email">
+        <label for="login-email">Email Address</label>
+        <div class="input-wrap">
+          <span class="icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg></span>
+          <input type="email" id="login-email" placeholder="you@company.com" autocomplete="email"/>
+        </div>
+        <span class="field-error">Please enter a valid email address.</span>
+      </div>
+
+      <div class="field" id="field-login-password">
+        <label for="login-password">Password</label>
+        <div class="input-wrap">
+          <span class="icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg></span>
+          <input type="password" id="login-password" placeholder="Enter your password" autocomplete="current-password"/>
+          <button type="button" class="toggle-pw" onclick="togglePw('login-password', this)" tabindex="-1">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          </button>
+        </div>
+        <span class="field-error">Password is required.</span>
+      </div>
+
+      <div class="forgot"><a href="#">Forgot password?</a></div>
+
+      <button type="submit" class="btn-primary" id="btn-login">
+        <div class="spinner"></div>
+        <span class="btn-text">Sign In to Dashboard</span>
+      </button>
+
+      <div class="alt-switch">
+        Don't have an account? <a onclick="switchTab('register')">Create one free</a>
+      </div>
+    </form>
+
+    <!-- REGISTER FORM -->
+    <form class="form" id="form-register" novalidate onsubmit="handleRegister(event)">
+      <div class="form-header">
+        <div class="form-title">Get started free ✦</div>
+        <div class="form-subtitle">Create your SMETrack account today</div>
+      </div>
+
+      <div class="field" id="field-reg-name">
+        <label for="reg-name">Full Name</label>
+        <div class="input-wrap">
+          <span class="icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg></span>
+          <input type="text" id="reg-name" placeholder="Jane Smith" autocomplete="name"/>
+        </div>
+        <span class="field-error">Please enter your full name.</span>
+      </div>
+
+      <div class="field" id="field-reg-email">
+        <label for="reg-email">Work Email</label>
+        <div class="input-wrap">
+          <span class="icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg></span>
+          <input type="email" id="reg-email" placeholder="you@company.com" autocomplete="email"/>
+        </div>
+        <span class="field-error">Please enter a valid email address.</span>
+      </div>
+
+      <div class="field-row">
+        <div class="field" id="field-reg-password">
+          <label for="reg-password">Password</label>
+          <div class="input-wrap">
+            <span class="icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg></span>
+            <input type="password" id="reg-password" placeholder="Min. 8 chars" oninput="checkStrength(this.value)" autocomplete="new-password"/>
+            <button type="button" class="toggle-pw" onclick="togglePw('reg-password', this)" tabindex="-1">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            </button>
+          </div>
+          <span class="field-error">Password must be at least 8 characters.</span>
+        </div>
+
+        <div class="field" id="field-reg-confirm">
+          <label for="reg-confirm">Confirm</label>
+          <div class="input-wrap">
+            <span class="icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></span>
+            <input type="password" id="reg-confirm" placeholder="Repeat password" autocomplete="new-password"/>
+            <button type="button" class="toggle-pw" onclick="togglePw('reg-confirm', this)" tabindex="-1">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            </button>
+          </div>
+          <span class="field-error">Passwords do not match.</span>
+        </div>
+      </div>
+
+      <div class="pw-strength" id="pw-strength">
+        <div class="pw-strength-bar"><div class="pw-strength-fill" id="pw-strength-fill"></div></div>
+        <div class="pw-strength-label" id="pw-strength-label"></div>
+      </div>
+
+      <button type="submit" class="btn-primary" id="btn-register">
+        <div class="spinner"></div>
+        <span class="btn-text">Create Free Account</span>
+      </button>
+
+      <div class="terms">
+        By registering, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+      </div>
+
+      <div class="alt-switch">
+        Already have an account? <a onclick="switchTab('login')">Sign in</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Trust badges -->
+  <div class="trust">
+    <div class="trust-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+      SSL Secured
+    </div>
+    <div class="trust-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+      Data Encrypted
+    </div>
+    <div class="trust-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      GDPR Compliant
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Global utilities first, then page-specific logic -->
+<script src="js/main.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>
