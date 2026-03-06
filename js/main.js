@@ -1,17 +1,22 @@
 /* ============================================================
-   SMETrack – Global JavaScript Utilities
-   ============================================================ */
+   SMETrack – main.js
+   Global utilities shared across all pages.
+   Load this BEFORE any page-specific JS file.
+============================================================ */
 
-// ── Toast Notification ─────────────────────────────────────
-function showToast(msg, type = '') {
+/* ── Toast Notification ───────────────────────────────────── */
+
+function showToast(msg, type) {
   const t = document.getElementById('toast');
   if (!t) return;
   t.textContent = msg;
-  t.className = 'toast ' + type + ' show';
-  setTimeout(() => t.className = 'toast ' + type, 3000);
+  t.className = 'toast ' + (type || '') + ' show';
+  setTimeout(() => { t.className = 'toast ' + (type || ''); }, 3000);
 }
 
-// ── Button Loading State ───────────────────────────────────
+
+/* ── Button Loading State ─────────────────────────────────── */
+
 function setLoading(btnId, on) {
   const btn = document.getElementById(btnId);
   if (!btn) return;
@@ -19,10 +24,15 @@ function setLoading(btnId, on) {
   btn.disabled = on;
 }
 
-// ── Validation Helpers ─────────────────────────────────────
+
+/* ── Email Validation ─────────────────────────────────────── */
+
 function isValidEmail(v) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 }
+
+
+/* ── Field Error Toggle ───────────────────────────────────── */
 
 function setError(fieldId, show) {
   const el = document.getElementById(fieldId);
@@ -34,7 +44,9 @@ function clearErrors() {
     .forEach(f => f.classList.remove('has-error'));
 }
 
-// ── Password Visibility Toggle ─────────────────────────────
+
+/* ── Password Visibility Toggle ───────────────────────────── */
+
 function togglePw(inputId, btn) {
   const input = document.getElementById(inputId);
   if (!input) return;
@@ -52,12 +64,15 @@ function togglePw(inputId, btn) {
        </svg>`;
 }
 
-// ── Password Strength Meter ────────────────────────────────
+
+/* ── Password Strength Meter ──────────────────────────────── */
+
 function checkStrength(pw) {
   const el    = document.getElementById('pw-strength');
   const fill  = document.getElementById('pw-strength-fill');
   const label = document.getElementById('pw-strength-label');
   if (!el) return;
+
   if (!pw) { el.classList.remove('visible'); return; }
   el.classList.add('visible');
 
@@ -65,16 +80,17 @@ function checkStrength(pw) {
   if (pw.length >= 8)  score++;
   if (pw.length >= 12) score++;
   if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
-  if (/\d/.test(pw)) score++;
+  if (/\d/.test(pw))   score++;
   if (/[^A-Za-z0-9]/.test(pw)) score++;
 
   const levels = [
-    { pct: '20%', color: '#EF4444', text: 'Very weak' },
-    { pct: '40%', color: '#F97316', text: 'Weak' },
-    { pct: '60%', color: '#EAB308', text: 'Fair' },
-    { pct: '80%', color: '#3B82F6', text: 'Strong' },
-    { pct: '100%', color: '#10B981', text: 'Very strong' },
+    { pct: '20%', color: '#EF4444', text: 'Very weak'  },
+    { pct: '40%', color: '#F97316', text: 'Weak'       },
+    { pct: '60%', color: '#EAB308', text: 'Fair'       },
+    { pct: '80%', color: '#3B82F6', text: 'Strong'     },
+    { pct: '100%',color: '#10B981', text: 'Very strong'},
   ];
+
   const lvl = levels[Math.min(score, 4)];
   fill.style.width      = lvl.pct;
   fill.style.background = lvl.color;
@@ -82,24 +98,29 @@ function checkStrength(pw) {
   label.style.color     = lvl.color;
 }
 
-// ── Format Currency ────────────────────────────────────────
-function formatCurrency(amount, currency = 'USD') {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency', currency, maximumFractionDigits: 0
-  }).format(amount);
+
+/* ── Sidebar Toggle (used on all inner pages) ─────────────── */
+
+function toggleSidebar() {
+  const sidebar  = document.getElementById('sidebar');
+  const mainWrap = document.querySelector('.main-wrap');
+  const isMobile = window.innerWidth <= 768;
+
+  if (isMobile) {
+    sidebar.classList.toggle('open');
+  } else {
+    sidebar.classList.toggle('collapsed');
+    if (mainWrap) mainWrap.classList.toggle('expanded');
+  }
 }
 
-// ── Format Date ────────────────────────────────────────────
-function formatDate(dateStr, options = { day: 'numeric', month: 'short', year: 'numeric' }) {
-  return new Date(dateStr).toLocaleDateString('en-US', options);
-}
 
-// ── Active Nav Link ────────────────────────────────────────
-// Call on each page to highlight the current nav item
+/* ── Active Nav Highlight ─────────────────────────────────── */
+
 function setActiveNav() {
-  const path = window.location.pathname.split('/').pop();
+  const page = window.location.pathname.split('/').pop() || 'dashboard.html';
   document.querySelectorAll('[data-nav]').forEach(link => {
-    link.classList.toggle('active', link.dataset.nav === path);
+    link.classList.toggle('active', link.dataset.nav === page);
   });
 }
 
