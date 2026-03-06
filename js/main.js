@@ -1,6 +1,5 @@
 /* ============================================================
    SMETrack – Global JavaScript Utilities
-   Used by: auth.html, dashboard.html, transactions.html, forecast.html
    ============================================================ */
 
 // ── Toast Notification ─────────────────────────────────────
