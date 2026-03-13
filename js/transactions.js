@@ -22,24 +22,36 @@ const TXN_CONFIG = {
 
 
 /* ══════════════════════════════════════════════════════════
-   DATA  –  Fill this array with your SME's transactions.
-   Each object needs these exact fields:
-   {
-     date:        'YYYY-MM-DD',
-     description: 'Short label',
-     type:        'income' or 'expense',
-     category:    'Sales' / 'Payroll' / 'Rent' / etc.,
-     amount:      number  (no ₹ sign, just the number),
-     status:      'completed' / 'pending' / 'failed'
-   }
+   DATA  –  DEMO MODE
+   To show panelist: uncomment the sample block below
+   and comment out the empty array above it.
 ══════════════════════════════════════════════════════════ */
 
+// ── Live (empty) – active by default ──
 let allTransactions = [];
+
+// ── Sample data – uncomment below to show panelist ──
+/*
+let allTransactions = [
+  { date:'2024-08-18', description:'Export Order – Dubai Buyer',     type:'income',  category:'Sales',         amount:42000, status:'completed' },
+  { date:'2024-08-15', description:'Raw Material Purchase',          type:'expense', category:'Raw Materials',  amount:14000, status:'completed' },
+  { date:'2024-08-12', description:'Handicraft Fair – Stall Income', type:'income',  category:'Sales',         amount:18500, status:'completed' },
+  { date:'2024-08-10', description:'Staff Wages – August',           type:'expense', category:'Payroll',       amount:22000, status:'completed' },
+  { date:'2024-08-07', description:'Online Store Sales',             type:'income',  category:'Sales',         amount:11200, status:'pending'   },
+  { date:'2024-08-04', description:'Packaging & Shipping Cost',      type:'expense', category:'Shipping',      amount: 5800, status:'completed' },
+  { date:'2024-08-01', description:'Wholesale Order – Mumbai Buyer', type:'income',  category:'Sales',         amount:32000, status:'completed' },
+  { date:'2024-07-28', description:'Electricity & Water Bill',       type:'expense', category:'Utilities',     amount: 3200, status:'completed' },
+  { date:'2024-07-25', description:'Craft Workshop Fee Collected',   type:'income',  category:'Services',      amount: 8500, status:'completed' },
+  { date:'2024-07-22', description:'Office Rent – July',             type:'expense', category:'Rent',          amount:10000, status:'completed' },
+  { date:'2024-07-18', description:'Instagram Ad Campaign',          type:'expense', category:'Marketing',     amount: 4500, status:'pending'   },
+  { date:'2024-07-15', description:'Government Grant – MSME Scheme', type:'income',  category:'Grant',         amount:25000, status:'completed' },
+];
+
 
 
 /* ── State ────────────────────────────────────────────────── */
 
-let txnFiltered     = [];
+let txnFiltered      = [];
 let txnCurrentFilter = 'all';
 let txnCurrentPage   = 1;
 let deleteTarget     = null;

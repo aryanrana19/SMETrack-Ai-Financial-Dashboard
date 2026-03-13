@@ -33,15 +33,23 @@ const FC_CONFIG = {
 
 
 /* ══════════════════════════════════════════════════════════
-   DATA  –  Copy the same numbers from dashboard.js here.
-   ACTUAL.income  = incomeData  (same array)
-   ACTUAL.expense = expenseData (same array)
+   DATA  –  DEMO MODE
+   To show panelist: uncomment the sample block below
+   and comment out the empty arrays above it.
 ══════════════════════════════════════════════════════════ */
 
+// ── Live (empty) – active by default ──
 const ACTUAL = {
   income:  [],   // e.g. [72000, 85000, 91000, ...]
   expense: []    // e.g. [48000, 54000, 52000, ...]
 };
+
+// ── Sample data – uncomment below to show panelist ──
+// const ACTUAL = {
+//   income:  [72000, 85000, 91000, 78000, 104000, 112000, 98000, 125000],
+//   expense: [48000, 54000, 52000, 61000,  67000,  71000, 65000,  78000]
+// };
+
 
 
 /* ── State ────────────────────────────────────────────────── */

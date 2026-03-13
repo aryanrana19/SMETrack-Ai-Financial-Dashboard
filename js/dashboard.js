@@ -33,9 +33,9 @@ const DASH_CONFIG = {
 ══════════════════════════════════════════════════════════ */
 
 const USER = {
-  name:   '',        // e.g. 'Riya Sharma'
-  role:   '',        // e.g. 'Business Owner'
-  initials: ''       // e.g. 'RS'  (shown in avatar circles)
+  name:     '',   // e.g. 'Riya Sharma'
+  role:     '',   // e.g. 'Business Owner'
+  initials: ''    // e.g. 'RS'
 };
 
 
@@ -44,43 +44,50 @@ const USER = {
    Each: { msg: '...', time: '...' }
 ══════════════════════════════════════════════════════════ */
 
-const NOTIFICATIONS = [
-  // { msg: 'Cash flow forecast ready for Q3', time: '2 min ago' },
-  // { msg: 'Expense limit at 85% this month',  time: '1 hr ago'  },
-];
+const NOTIFICATIONS = [];
 
 
 /* ══════════════════════════════════════════════════════════
-   DATA  –  Fill these with your SME's numbers.
-
-   incomeData / expenseData : monthly figures, Jan = index 0
-   Only fill months that have passed — leave the rest empty.
-   Example for Jan–Aug: [72000, 85000, 91000, 78000, 104000, 112000, 98000, 125000]
-
-   pieData : expense breakdown by category for current month
-   dashTransactions : recent records shown in the table
+   DATA  –  DEMO MODE
+   To show panelist: uncomment the sample block below
+   and comment out the empty arrays above it.
 ══════════════════════════════════════════════════════════ */
 
-const incomeData  = [];
-const expenseData = [];
-
-const pieData = {
+// ── Live (empty) – active by default ──
+const incomeData      = [];
+const expenseData     = [];
+const pieData         = {
   labels: [],
   values: [],
   colors: ['#2563EB','#F59E0B','#10B981','#6366F1','#EC4899','#94A3B8']
 };
-
 const dashTransactions = [];
+
+// ── Sample data – uncomment below to show panelist ──
 /*
-  Each transaction object:
-  {
-    date:        'YYYY-MM-DD',
-    description: 'Short label',
-    type:        'income' or 'expense',
-    category:    'Sales' / 'Payroll' / 'Rent' / etc.,
-    amount:      number,
-    status:      'completed' / 'pending' / 'failed'
-  }
+const incomeData  = [72000, 85000, 91000, 78000, 104000, 112000, 98000, 125000];
+const expenseData = [48000, 54000, 52000, 61000,  67000,  71000, 65000,  78000];
+
+const pieData = {
+  labels: ['Raw Materials', 'Payroll', 'Rent', 'Marketing', 'Shipping', 'Misc'],
+  values: [28000, 22000, 10000, 8000, 6000, 4000],
+  colors: ['#2563EB','#F59E0B','#10B981','#6366F1','#EC4899','#94A3B8']
+};
+
+const dashTransactions = [
+  { date:'2024-08-18', description:'Export Order – Dubai Buyer',     type:'income',  category:'Sales',         amount:42000, status:'completed' },
+  { date:'2024-08-15', description:'Raw Material Purchase',          type:'expense', category:'Raw Materials',  amount:14000, status:'completed' },
+  { date:'2024-08-12', description:'Handicraft Fair – Stall Income', type:'income',  category:'Sales',         amount:18500, status:'completed' },
+  { date:'2024-08-10', description:'Staff Wages – August',           type:'expense', category:'Payroll',       amount:22000, status:'completed' },
+  { date:'2024-08-07', description:'Online Store Sales',             type:'income',  category:'Sales',         amount:11200, status:'pending'   },
+  { date:'2024-08-04', description:'Packaging & Shipping Cost',      type:'expense', category:'Shipping',      amount: 5800, status:'completed' },
+];
+
+const USER = {
+  name:     'Riya Sharma',
+  role:     'Business Owner',
+  initials: 'RS'
+};
 */
 
 
