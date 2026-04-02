@@ -1,11 +1,3 @@
-/* ============================================================
-   SMETrack – transactions.js
-   Depends on: main.js (load first)
-
-   HOW TO USE:
-   Fill the allTransactions array below with your own data.
-   Everything else — filters, pagination, CRUD — is automatic.
-============================================================ */
 
 /* ── Config ───────────────────────────────────────────────── */
 
@@ -20,12 +12,6 @@ const TXN_CONFIG = {
   colors: { positive: '#16A34A', negative: '#DC2626' }
 };
 
-
-/* ══════════════════════════════════════════════════════════
-   DATA  –  DEMO MODE
-   To show panelist: uncomment the sample block below
-   and comment out the empty array above it.
-══════════════════════════════════════════════════════════ */
 
 // ── Live (empty) – active by default ──
 let allTransactions = [];

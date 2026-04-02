@@ -1,14 +1,3 @@
-/* ============================================================
-   SMETrack – dashboard.js
-   Depends on: main.js (load first)
-
-   HOW TO USE:
-   1. Fill USER info below
-   2. Fill incomeData / expenseData arrays (one number per month)
-   3. Fill pieData labels + values
-   4. Fill dashTransactions array
-   Everything else — KPIs, trends, charts, table — is automatic.
-============================================================ */
 
 /* ── Config ───────────────────────────────────────────────── */
 
@@ -28,15 +17,11 @@ const DASH_CONFIG = {
 };
 
 
-/* ══════════════════════════════════════════════════════════
-   USER  –  Change this to your SME owner's details
-══════════════════════════════════════════════════════════ */
-
-const USER = {
-  name:     '',   // e.g. 'Riya Sharma'
-  role:     '',   // e.g. 'Business Owner'
-  initials: ''    // e.g. 'RS'
-};
+// const USER = {
+//   name:     '',   // e.g. 'Riya Sharma'
+//   role:     '',   // e.g. 'Business Owner'
+//   initials: ''    // e.g. 'RS'
+// };
 
 
 /* ══════════════════════════════════════════════════════════
@@ -44,7 +29,7 @@ const USER = {
    Each: { msg: '...', time: '...' }
 ══════════════════════════════════════════════════════════ */
 
-const NOTIFICATIONS = [];
+// const NOTIFICATIONS = [];
 
 
 /* ══════════════════════════════════════════════════════════
@@ -54,17 +39,17 @@ const NOTIFICATIONS = [];
 ══════════════════════════════════════════════════════════ */
 
 // ── Live (empty) – active by default ──
-const incomeData      = [];
-const expenseData     = [];
-const pieData         = {
-  labels: [],
-  values: [],
-  colors: ['#2563EB','#F59E0B','#10B981','#6366F1','#EC4899','#94A3B8']
-};
-const dashTransactions = [];
+// const incomeData      = [];
+// const expenseData     = [];
+// const pieData         = {
+//   labels: [],
+//   values: [],
+//   colors: ['#2563EB','#F59E0B','#10B981','#6366F1','#EC4899','#94A3B8']
+// };
+// const dashTransactions = [];
 
 // ── Sample data – uncomment below to show panelist ──
-/*
+
 const incomeData  = [72000, 85000, 91000, 78000, 104000, 112000, 98000, 125000];
 const expenseData = [48000, 54000, 52000, 61000,  67000,  71000, 65000,  78000];
 
@@ -88,7 +73,7 @@ const USER = {
   role:     'Business Owner',
   initials: 'RS'
 };
-*/
+
 
 
 /* ── Init ─────────────────────────────────────────────────── */

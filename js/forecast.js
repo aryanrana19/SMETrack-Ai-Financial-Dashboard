@@ -1,12 +1,3 @@
-/* ============================================================
-   SMETrack – forecast.js
-   Depends on: main.js (load first)
-
-   HOW TO USE:
-   Fill ACTUAL.income and ACTUAL.expense with the SAME numbers
-   you used in dashboard.js incomeData / expenseData.
-   Everything else is automatic.
-============================================================ */
 
 /* ── Config ───────────────────────────────────────────────── */
 
@@ -31,12 +22,6 @@ const FC_CONFIG = {
   sim: { incomeGrowth: 5, expenseChange: 0, investment: 0, recurring: 0 }
 };
 
-
-/* ══════════════════════════════════════════════════════════
-   DATA  –  DEMO MODE
-   To show panelist: uncomment the sample block below
-   and comment out the empty arrays above it.
-══════════════════════════════════════════════════════════ */
 
 // ── Live (empty) – active by default ──
 const ACTUAL = {

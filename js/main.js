@@ -1,8 +1,3 @@
-/* ============================================================
-   SMETrack – main.js
-   Global utilities shared across all pages.
-   Load this BEFORE any page-specific JS file.
-============================================================ */
 
 /* ── Toast Notification ───────────────────────────────────── */
 
