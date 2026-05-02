@@ -1,3 +1,8 @@
+/* ============================================================
+   SMETrack – dashboard.js
+   Depends on: main.js (load first)
+   API constant is defined in main.js — do NOT redefine here.
+============================================================ */
 
 /* ── Config ───────────────────────────────────────────────── */
 
@@ -13,60 +18,14 @@ const DASH_CONFIG = {
     expenseBg:    'rgba(245,158,11,0.06)',
     tooltipBg:    '#1E293B'
   },
-  pie: { cutout: '68%', borderWidth: 2, borderColor: '#fff' }
+  pie: {
+    cutout: '68%', borderWidth: 2, borderColor: '#fff',
+    colors: ['#2563EB','#F59E0B','#10B981','#6366F1','#EC4899','#94A3B8']
+  }
 };
 
 
-// const USER = {
-//   name:     '',   // e.g. 'Riya Sharma'
-//   role:     '',   // e.g. 'Business Owner'
-//   initials: ''    // e.g. 'RS'
-// };
-
-
-/* ══════════════════════════════════════════════════════════
-   NOTIFICATIONS  –  Add your own or leave empty []
-   Each: { msg: '...', time: '...' }
-══════════════════════════════════════════════════════════ */
-
-// const NOTIFICATIONS = [];
-
-
-/* ══════════════════════════════════════════════════════════
-   DATA  –  DEMO MODE
-   To show panelist: uncomment the sample block below
-   and comment out the empty arrays above it.
-══════════════════════════════════════════════════════════ */
-
-// ── Live (empty) – active by default ──
-// const incomeData      = [];
-// const expenseData     = [];
-// const pieData         = {
-//   labels: [],
-//   values: [],
-//   colors: ['#2563EB','#F59E0B','#10B981','#6366F1','#EC4899','#94A3B8']
-// };
-// const dashTransactions = [];
-
-// ── Sample data – uncomment below to show panelist ──
-
-const incomeData  = [72000, 85000, 91000, 78000, 104000, 112000, 98000, 125000];
-const expenseData = [48000, 54000, 52000, 61000,  67000,  71000, 65000,  78000];
-
-const pieData = {
-  labels: ['Raw Materials', 'Payroll', 'Rent', 'Marketing', 'Shipping', 'Misc'],
-  values: [28000, 22000, 10000, 8000, 6000, 4000],
-  colors: ['#2563EB','#F59E0B','#10B981','#6366F1','#EC4899','#94A3B8']
-};
-
-const dashTransactions = [
-  { date:'2024-08-18', description:'Export Order – Dubai Buyer',     type:'income',  category:'Sales',         amount:42000, status:'completed' },
-  { date:'2024-08-15', description:'Raw Material Purchase',          type:'expense', category:'Raw Materials',  amount:14000, status:'completed' },
-  { date:'2024-08-12', description:'Handicraft Fair – Stall Income', type:'income',  category:'Sales',         amount:18500, status:'completed' },
-  { date:'2024-08-10', description:'Staff Wages – August',           type:'expense', category:'Payroll',       amount:22000, status:'completed' },
-  { date:'2024-08-07', description:'Online Store Sales',             type:'income',  category:'Sales',         amount:11200, status:'pending'   },
-  { date:'2024-08-04', description:'Packaging & Shipping Cost',      type:'expense', category:'Shipping',      amount: 5800, status:'completed' },
-];
+/* ── User ─────────────────────────────────────────────────── */
 
 const USER = {
   name:     'Riya Sharma',
@@ -75,18 +34,76 @@ const USER = {
 };
 
 
+/* ── Notifications ────────────────────────────────────────── */
+
+const NOTIFICATIONS = [];
+
 
 /* ── Init ─────────────────────────────────────────────────── */
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   setCurrentDate();
   renderUser();
   renderNotifications();
-  renderKPIs();
-  renderDashTransactions();
-  initLineChart();
-  initPieChart();
+  await loadDashboardData();
 });
+
+
+/* ── Load All Data From Backend ───────────────────────────── */
+
+async function loadDashboardData() {
+  try {
+    const res  = await fetch(`${API}/transactions`);
+    const data = await res.json();
+
+    if (!data.length) {
+      renderDashTransactions([]);
+      return;
+    }
+
+    const monthlyIncome  = buildMonthlyTotals(data, 'income');
+    const monthlyExpense = buildMonthlyTotals(data, 'expense');
+    const computedPie    = buildPieFromTransactions(data);
+
+    renderKPIs(monthlyIncome, monthlyExpense, data);
+    renderDashTransactions(data.slice(0, 6));
+    initLineChart(monthlyIncome, monthlyExpense);
+    initPieChart(computedPie);
+
+  } catch (err) {
+    renderDashTransactions([]);
+  }
+}
+
+
+/* ── Build Monthly Totals ─────────────────────────────────── */
+
+function buildMonthlyTotals(transactions, type) {
+  const filtered = transactions.filter(t => t.type === type);
+  const map = {};
+  filtered.forEach(t => {
+    const key = t.date.slice(0, 7);
+    map[key] = (map[key] || 0) + t.amount;
+  });
+  return Object.keys(map).sort().map(k => Math.round(map[k]));
+}
+
+
+/* ── Build Pie Data From Transactions ─────────────────────── */
+
+function buildPieFromTransactions(transactions) {
+  const expenses = transactions.filter(t => t.type === 'expense');
+  const map = {};
+  expenses.forEach(t => {
+    map[t.category] = (map[t.category] || 0) + t.amount;
+  });
+
+  const labels = Object.keys(map);
+  const values = labels.map(l => Math.round(map[l]));
+  const colors = DASH_CONFIG.pie.colors.slice(0, labels.length);
+
+  return { labels, values, colors };
+}
 
 
 /* ── Date ─────────────────────────────────────────────────── */
@@ -157,41 +174,35 @@ document.addEventListener('click', e => {
 });
 
 
-/* ── KPI Cards (fully computed from data) ─────────────────── */
+/* ── KPI Cards ────────────────────────────────────────────── */
 
-function renderKPIs() {
+function renderKPIs(incomeData, expenseData, allTxns) {
   if (!incomeData.length || !expenseData.length) return;
 
-  const len      = incomeData.length;
-  const curInc   = incomeData[len - 1];
-  const curExp   = expenseData[len - 1];
-  const curNet   = curInc - curExp;
-  const curSav   = Math.round((curNet / curInc) * 100);
+  const len    = Math.min(incomeData.length, expenseData.length);
+  const curInc = incomeData[len - 1];
+  const curExp = expenseData[len - 1];
+  const curNet = curInc - curExp;
+  const curSav = Math.round((curNet / curInc) * 100);
 
-  // Previous month (for trend)
-  const prevInc  = len >= 2 ? incomeData[len - 2]  : null;
-  const prevExp  = len >= 2 ? expenseData[len - 2] : null;
-  const prevNet  = prevInc != null ? prevInc - prevExp : null;
-  const prevSav  = prevInc != null ? Math.round(((prevInc - prevExp) / prevInc) * 100) : null;
-
-  const curMonth  = DASH_CONFIG.months[len - 1];
+  const prevInc = len >= 2 ? incomeData[len - 2]  : null;
+  const prevExp = len >= 2 ? expenseData[len - 2] : null;
+  const prevNet = prevInc != null ? prevInc - prevExp : null;
+  const prevSav = prevInc != null ? Math.round(((prevInc - prevExp) / prevInc) * 100) : null;
   const prevMonth = len >= 2 ? DASH_CONFIG.months[len - 2] : null;
 
-  // Animate values
-  animateCount('kpi-income',  curInc,  false);
-  animateCount('kpi-expense', curExp,  false);
-  animateCount('kpi-profit',  curNet,  false);
-  animateCount('kpi-savings', curSav,  true);
+  animateCount('kpi-income',  curInc, false);
+  animateCount('kpi-expense', curExp, false);
+  animateCount('kpi-profit',  curNet, false);
+  animateCount('kpi-savings', curSav, true);
 
-  // Trend badges
   if (prevInc != null) {
-    setTrend('trend-income',  curInc, prevInc,  false);
-    setTrend('trend-expense', curExp, prevExp,  true);  // expense up = bad (red)
-    setTrend('trend-profit',  curNet, prevNet,  false);
-    setTrend('trend-savings', curSav, prevSav,  false);
+    setTrend('trend-income',  curInc, prevInc, false);
+    setTrend('trend-expense', curExp, prevExp, true);
+    setTrend('trend-profit',  curNet, prevNet, false);
+    setTrend('trend-savings', curSav, prevSav, false);
   }
 
-  // Sub-labels
   if (prevMonth) {
     setText('kpi-income-sub',  `vs ${fmt(prevInc)} in ${prevMonth}`);
     setText('kpi-expense-sub', `vs ${fmt(prevExp)} in ${prevMonth}`);
@@ -199,11 +210,8 @@ function renderKPIs() {
     setText('kpi-savings-sub', `vs ${prevSav}% in ${prevMonth}`);
   }
 
-  // Chart subtitle
   setText('line-subtitle', `Monthly comparison · ${new Date().getFullYear()}`);
-
-  // Transaction section subtitle
-  setText('txn-subtitle', `Showing ${dashTransactions.length} recent record${dashTransactions.length !== 1 ? 's' : ''}`);
+  setText('txn-subtitle',  `Showing ${Math.min(allTxns.length, 6)} recent records`);
 }
 
 
@@ -213,17 +221,15 @@ function setTrend(id, current, previous, invertColor) {
   const el = document.getElementById(id);
   if (!el || previous == null || previous === 0) return;
 
-  const pct  = Math.abs(Math.round(((current - previous) / previous) * 100));
-  const up   = current >= previous;
-
-  // invertColor = true means "up is bad" (used for expenses)
+  const pct    = Math.abs(Math.round(((current - previous) / previous) * 100));
+  const up     = current >= previous;
   const isGood = invertColor ? !up : up;
 
   const arrowUp   = `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>`;
   const arrowDown = `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>`;
 
-  el.innerHTML  = (up ? arrowUp : arrowDown) + ` ${pct}%`;
-  el.className  = 'kpi-trend ' + (isGood ? 'up' : 'down');
+  el.innerHTML = (up ? arrowUp : arrowDown) + ` ${pct}%`;
+  el.className = 'kpi-trend ' + (isGood ? 'up' : 'down');
 }
 
 
@@ -250,16 +256,16 @@ function animateCount(id, target, isPercent) {
 
 /* ── Transactions Table ───────────────────────────────────── */
 
-function renderDashTransactions() {
+function renderDashTransactions(txns) {
   const tbody = document.getElementById('txn-body');
   if (!tbody) return;
 
-  if (!dashTransactions.length) {
+  if (!txns.length) {
     tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#94A3B8;padding:32px;">No transactions yet</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = dashTransactions.map(t => {
+  tbody.innerHTML = txns.map(t => {
     const sign   = t.type === 'income' ? '+' : '-';
     const amount = DASH_CONFIG.currency + t.amount.toLocaleString(DASH_CONFIG.locale);
     const date   = new Date(t.date).toLocaleDateString(DASH_CONFIG.locale, {
@@ -280,11 +286,11 @@ function renderDashTransactions() {
 
 /* ── Line Chart ───────────────────────────────────────────── */
 
-function initLineChart() {
+function initLineChart(incomeData, expenseData) {
   const ctx = document.getElementById('lineChart');
   if (!ctx || !incomeData.length) return;
 
-  const len    = incomeData.length;
+  const len    = Math.min(incomeData.length, expenseData.length);
   const labels = DASH_CONFIG.months.slice(0, len);
 
   new Chart(ctx, {
@@ -342,7 +348,7 @@ function initLineChart() {
 
 /* ── Pie Chart ────────────────────────────────────────────── */
 
-function initPieChart() {
+function initPieChart(pieData) {
   const ctx = document.getElementById('pieChart');
   if (!ctx || !pieData.values.length) return;
 
@@ -375,10 +381,10 @@ function initPieChart() {
     }
   });
 
-  buildPieLegend();
+  buildPieLegend(pieData);
 }
 
-function buildPieLegend() {
+function buildPieLegend(pieData) {
   const el = document.getElementById('pie-legend');
   if (!el) return;
   el.innerHTML = pieData.labels.map((label, i) => `

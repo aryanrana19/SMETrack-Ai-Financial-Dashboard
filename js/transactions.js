@@ -1,3 +1,8 @@
+/* ============================================================
+   SMETrack – transactions.js
+   Depends on: main.js (load first)
+   API constant is defined in main.js — do NOT redefine here.
+============================================================ */
 
 /* ── Config ───────────────────────────────────────────────── */
 
@@ -13,26 +18,28 @@ const TXN_CONFIG = {
 };
 
 
-// ── Live (empty) – active by default ──
+/* ── Data ─────────────────────────────────────────────────── */
+
+// ── Live (from backend) – active by default ──
 let allTransactions = [];
 
-// ── Sample data – uncomment below to show panelist ──
+// ── Sample data – uncomment to show panelist without backend ──
 /*
 let allTransactions = [
-  { date:'2024-08-18', description:'Export Order – Dubai Buyer',     type:'income',  category:'Sales',         amount:42000, status:'completed' },
-  { date:'2024-08-15', description:'Raw Material Purchase',          type:'expense', category:'Raw Materials',  amount:14000, status:'completed' },
-  { date:'2024-08-12', description:'Handicraft Fair – Stall Income', type:'income',  category:'Sales',         amount:18500, status:'completed' },
-  { date:'2024-08-10', description:'Staff Wages – August',           type:'expense', category:'Payroll',       amount:22000, status:'completed' },
-  { date:'2024-08-07', description:'Online Store Sales',             type:'income',  category:'Sales',         amount:11200, status:'pending'   },
-  { date:'2024-08-04', description:'Packaging & Shipping Cost',      type:'expense', category:'Shipping',      amount: 5800, status:'completed' },
-  { date:'2024-08-01', description:'Wholesale Order – Mumbai Buyer', type:'income',  category:'Sales',         amount:32000, status:'completed' },
-  { date:'2024-07-28', description:'Electricity & Water Bill',       type:'expense', category:'Utilities',     amount: 3200, status:'completed' },
-  { date:'2024-07-25', description:'Craft Workshop Fee Collected',   type:'income',  category:'Services',      amount: 8500, status:'completed' },
-  { date:'2024-07-22', description:'Office Rent – July',             type:'expense', category:'Rent',          amount:10000, status:'completed' },
-  { date:'2024-07-18', description:'Instagram Ad Campaign',          type:'expense', category:'Marketing',     amount: 4500, status:'pending'   },
-  { date:'2024-07-15', description:'Government Grant – MSME Scheme', type:'income',  category:'Grant',         amount:25000, status:'completed' },
+  { id:1,  date:'2024-08-18', description:'Export Order – Dubai Buyer',     type:'income',  category:'Sales',         amount:42000, status:'completed' },
+  { id:2,  date:'2024-08-15', description:'Raw Material Purchase',          type:'expense', category:'Raw Materials',  amount:14000, status:'completed' },
+  { id:3,  date:'2024-08-12', description:'Handicraft Fair – Stall Income', type:'income',  category:'Sales',         amount:18500, status:'completed' },
+  { id:4,  date:'2024-08-10', description:'Staff Wages – August',           type:'expense', category:'Payroll',       amount:22000, status:'completed' },
+  { id:5,  date:'2024-08-07', description:'Online Store Sales',             type:'income',  category:'Sales',         amount:11200, status:'pending'   },
+  { id:6,  date:'2024-08-04', description:'Packaging & Shipping Cost',      type:'expense', category:'Shipping',      amount: 5800, status:'completed' },
+  { id:7,  date:'2024-08-01', description:'Wholesale Order – Mumbai Buyer', type:'income',  category:'Sales',         amount:32000, status:'completed' },
+  { id:8,  date:'2024-07-28', description:'Electricity & Water Bill',       type:'expense', category:'Utilities',     amount: 3200, status:'completed' },
+  { id:9,  date:'2024-07-25', description:'Craft Workshop Fee Collected',   type:'income',  category:'Services',      amount: 8500, status:'completed' },
+  { id:10, date:'2024-07-22', description:'Office Rent – July',             type:'expense', category:'Rent',          amount:10000, status:'completed' },
+  { id:11, date:'2024-07-18', description:'Instagram Ad Campaign',          type:'expense', category:'Marketing',     amount: 4500, status:'pending'   },
+  { id:12, date:'2024-07-15', description:'Government Grant – MSME Scheme', type:'income',  category:'Grant',         amount:25000, status:'completed' },
 ];
-
+*/
 
 
 /* ── State ────────────────────────────────────────────────── */
@@ -45,11 +52,26 @@ let deleteTarget     = null;
 
 /* ── Init ─────────────────────────────────────────────────── */
 
-document.addEventListener('DOMContentLoaded', () => {
-  txnFiltered = [...allTransactions];
+document.addEventListener('DOMContentLoaded', async () => {
   setValue('m-date', today());
-  applyFilters();
+  await loadTransactions();
 });
+
+
+/* ── Load from Backend ────────────────────────────────────── */
+
+async function loadTransactions() {
+  try {
+    const res  = await fetch(`${API}/transactions`);
+    const data = await res.json();
+    allTransactions = data;
+    txnFiltered     = [...allTransactions];
+    applyFilters();
+  } catch (err) {
+    txnFiltered = [...allTransactions];
+    applyFilters();
+  }
+}
 
 
 /* ── Filters ──────────────────────────────────────────────── */
@@ -94,9 +116,9 @@ function renderTable() {
   const pageData   = txnFiltered.slice(start, start + TXN_CONFIG.pageSize);
 
   if (!txnFiltered.length) {
-    tbody.innerHTML       = '';
-    empty.style.display   = 'block';
-    pagEl.innerHTML       = '';
+    tbody.innerHTML     = '';
+    empty.style.display = 'block';
+    pagEl.innerHTML     = '';
     return;
   }
 
@@ -232,7 +254,7 @@ function closeDeleteOutside(e){ if (e.target === document.getElementById('del-ov
 
 /* ── Save Transaction ─────────────────────────────────────── */
 
-function saveTransaction() {
+async function saveTransaction() {
   clearModalErrors();
 
   const desc     = (getValue('m-desc') || '').trim();
@@ -253,7 +275,24 @@ function saveTransaction() {
 
   setLoading('btn-save', true);
 
-  setTimeout(() => {
+  try {
+    if (editIdx !== '') {
+      const oldTxn = allTransactions[parseInt(editIdx)];
+      await fetch(`${API}/transactions/${oldTxn.id}`, { method: 'DELETE' });
+    }
+
+    await fetch(`${API}/transactions`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(record)
+    });
+
+    setLoading('btn-save', false);
+    showToast(editIdx !== '' ? '✓ Transaction updated' : '✓ Transaction added', 'success');
+    closeModal();
+    await loadTransactions();
+
+  } catch (err) {
     setLoading('btn-save', false);
     if (editIdx !== '') {
       allTransactions[parseInt(editIdx)] = record;
@@ -264,7 +303,7 @@ function saveTransaction() {
     }
     closeModal();
     applyFilters();
-  }, TXN_CONFIG.toastDelay);
+  }
 }
 
 
@@ -275,13 +314,24 @@ function openDelete(index) {
   openOverlay('del-overlay');
 }
 
-function confirmDelete() {
+async function confirmDelete() {
   if (deleteTarget === null) return;
-  allTransactions.splice(deleteTarget, 1);
-  deleteTarget = null;
-  closeDelete();
-  applyFilters();
-  showToast('Transaction deleted', 'error');
+  const txn = allTransactions[deleteTarget];
+
+  try {
+    await fetch(`${API}/transactions/${txn.id}`, { method: 'DELETE' });
+    deleteTarget = null;
+    closeDelete();
+    await loadTransactions();
+    showToast('Transaction deleted', 'error');
+
+  } catch (err) {
+    allTransactions.splice(deleteTarget, 1);
+    deleteTarget = null;
+    closeDelete();
+    applyFilters();
+    showToast('Transaction deleted', 'error');
+  }
 }
 
 

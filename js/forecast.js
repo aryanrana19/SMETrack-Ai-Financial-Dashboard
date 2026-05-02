@@ -1,3 +1,7 @@
+/* ============================================================
+   SMETrack – forecast.js
+   Depends on: main.js (load first)
+============================================================ */
 
 /* ── Config ───────────────────────────────────────────────── */
 
@@ -22,19 +26,8 @@ const FC_CONFIG = {
   sim: { incomeGrowth: 5, expenseChange: 0, investment: 0, recurring: 0 }
 };
 
-
-// ── Live (empty) – active by default ──
-const ACTUAL = {
-  income:  [],   // e.g. [72000, 85000, 91000, ...]
-  expense: []    // e.g. [48000, 54000, 52000, ...]
-};
-
-// ── Sample data – uncomment below to show panelist ──
-// const ACTUAL = {
-//   income:  [72000, 85000, 91000, 78000, 104000, 112000, 98000, 125000],
-//   expense: [48000, 54000, 52000, 61000,  67000,  71000, 65000,  78000]
-// };
-
+/* ── Backend URL ──────────────────────────────────────────── */
+const API = 'http://127.0.0.1:8000';
 
 
 /* ── State ────────────────────────────────────────────────── */
@@ -42,13 +35,55 @@ const ACTUAL = {
 let currentHorizon = 3;
 let forecastChart  = null;
 
+// ACTUAL gets populated from backend on load
+const ACTUAL = {
+  income:  [],
+  expense: []
+};
+
 
 /* ── Init ─────────────────────────────────────────────────── */
 
-document.addEventListener('DOMContentLoaded', () => {
-  buildForecast(3);
-  animateHealthScore();
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadForecastData();
 });
+
+
+/* ── Load Data From Backend ───────────────────────────────── */
+
+async function loadForecastData() {
+  try {
+    const res  = await fetch(`${API}/transactions`);
+    const data = await res.json();
+
+    if (!data.length) return;
+
+    // Build monthly arrays from transactions (same logic as dashboard)
+    ACTUAL.income  = buildMonthlyTotals(data, 'income');
+    ACTUAL.expense = buildMonthlyTotals(data, 'expense');
+
+    buildForecast(currentHorizon);
+    animateHealthScore();
+
+  } catch (err) {
+    // Backend not running — do nothing, page stays empty
+  }
+}
+
+
+/* ── Build Monthly Totals From Transactions ───────────────── */
+
+function buildMonthlyTotals(transactions, type) {
+  const filtered = transactions.filter(t => t.type === type);
+
+  const map = {};
+  filtered.forEach(t => {
+    const key = t.date.slice(0, 7); // 'YYYY-MM'
+    map[key] = (map[key] || 0) + t.amount;
+  });
+
+  return Object.keys(map).sort().map(k => Math.round(map[k]));
+}
 
 
 /* ── Horizon Toggle ───────────────────────────────────────── */
