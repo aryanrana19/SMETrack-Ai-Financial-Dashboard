@@ -20,7 +20,6 @@ const TXN_CONFIG = {
 
 /* ── Data ─────────────────────────────────────────────────── */
 
-// ── Live (from backend) – active by default ──
 let allTransactions = [];
 
 // ── Sample data – uncomment to show panelist without backend ──
@@ -32,14 +31,32 @@ let allTransactions = [
   { id:4,  date:'2024-08-10', description:'Staff Wages – August',           type:'expense', category:'Payroll',       amount:22000, status:'completed' },
   { id:5,  date:'2024-08-07', description:'Online Store Sales',             type:'income',  category:'Sales',         amount:11200, status:'pending'   },
   { id:6,  date:'2024-08-04', description:'Packaging & Shipping Cost',      type:'expense', category:'Shipping',      amount: 5800, status:'completed' },
-  { id:7,  date:'2024-08-01', description:'Wholesale Order – Mumbai Buyer', type:'income',  category:'Sales',         amount:32000, status:'completed' },
-  { id:8,  date:'2024-07-28', description:'Electricity & Water Bill',       type:'expense', category:'Utilities',     amount: 3200, status:'completed' },
-  { id:9,  date:'2024-07-25', description:'Craft Workshop Fee Collected',   type:'income',  category:'Services',      amount: 8500, status:'completed' },
-  { id:10, date:'2024-07-22', description:'Office Rent – July',             type:'expense', category:'Rent',          amount:10000, status:'completed' },
-  { id:11, date:'2024-07-18', description:'Instagram Ad Campaign',          type:'expense', category:'Marketing',     amount: 4500, status:'pending'   },
-  { id:12, date:'2024-07-15', description:'Government Grant – MSME Scheme', type:'income',  category:'Grant',         amount:25000, status:'completed' },
 ];
 */
+
+
+/* ── User ─────────────────────────────────────────────────── */
+
+const TXN_USER = {
+  name:     'Aryan Rana',
+  role:     'Business Owner',
+  initials: 'AR'
+};
+
+function renderTxnUser() {
+  const ids = {
+    'sidebar-name':   TXN_USER.name,
+    'sidebar-role':   TXN_USER.role,
+    'sidebar-avatar': TXN_USER.initials,
+    'topbar-name':    TXN_USER.name,
+    'topbar-role':    TXN_USER.role,
+    'topbar-avatar':  TXN_USER.initials,
+  };
+  Object.entries(ids).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  });
+}
 
 
 /* ── State ────────────────────────────────────────────────── */
@@ -48,11 +65,13 @@ let txnFiltered      = [];
 let txnCurrentFilter = 'all';
 let txnCurrentPage   = 1;
 let deleteTarget     = null;
+let csvParsedData    = [];  // holds parsed CSV rows before import
 
 
 /* ── Init ─────────────────────────────────────────────────── */
 
 document.addEventListener('DOMContentLoaded', async () => {
+  renderTxnUser();
   setValue('m-date', today());
   await loadTransactions();
 });
@@ -147,14 +166,12 @@ function buildRow(t) {
         <div class="action-btns">
           <button class="btn-icon edit" onclick="openEdit(${index})" title="Edit">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
             </svg>
           </button>
           <button class="btn-icon delete" onclick="openDelete(${index})" title="Delete">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
             </svg>
           </button>
         </div>
@@ -335,6 +352,234 @@ async function confirmDelete() {
 }
 
 
+/* ══════════════════════════════════════════════════════════
+   CSV IMPORT
+══════════════════════════════════════════════════════════ */
+
+function openCsvModal() {
+  csvParsedData = [];
+  resetCsvModal();
+  openOverlay('csv-overlay');
+}
+
+function closeCsvModal()      { closeOverlay('csv-overlay'); resetCsvModal(); }
+function closeCsvOutside(e)   { if (e.target === document.getElementById('csv-overlay')) closeCsvModal(); }
+
+function resetCsvModal() {
+  csvParsedData = [];
+  const fileInput = document.getElementById('csv-file-input');
+  if (fileInput) fileInput.value = '';
+  showEl('csv-file-info',    false);
+  showEl('csv-preview-wrap', false);
+  showEl('csv-error-box',    false);
+  const dropzone = document.getElementById('csv-dropzone');
+  if (dropzone) dropzone.classList.remove('drag-over');
+  setCsvImportBtn(false);
+}
+
+/* Drag and drop */
+function csvDragOver(e) {
+  e.preventDefault();
+  document.getElementById('csv-dropzone').classList.add('drag-over');
+}
+function csvDragLeave(e) {
+  document.getElementById('csv-dropzone').classList.remove('drag-over');
+}
+function csvDrop(e) {
+  e.preventDefault();
+  document.getElementById('csv-dropzone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) processCSVFile(file);
+}
+
+/* File input selected */
+function csvFileSelected(e) {
+  const file = e.target.files[0];
+  if (file) processCSVFile(file);
+}
+
+/* Parse the CSV file */
+function processCSVFile(file) {
+  showEl('csv-error-box', false);
+
+  if (!file.name.endsWith('.csv')) {
+    showCsvError('Please upload a .csv file only.');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target.result;
+    const result = parseCSV(text);
+
+    if (result.error) {
+      showCsvError(result.error);
+      setCsvImportBtn(false);
+      return;
+    }
+
+    csvParsedData = result.rows;
+
+    // Show file info
+    setText('csv-file-name',  file.name);
+    setText('csv-row-count',  `${csvParsedData.length} rows found`);
+    showEl('csv-file-info',   true);
+
+    // Show preview (first 5 rows)
+    renderCsvPreview(csvParsedData.slice(0, 5));
+    setText('csv-preview-count', `(showing first ${Math.min(5, csvParsedData.length)} of ${csvParsedData.length})`);
+    showEl('csv-preview-wrap', true);
+
+    setCsvImportBtn(true);
+  };
+  reader.readAsText(file);
+}
+
+/* Parse CSV text into array of objects */
+function parseCSV(text) {
+  const lines = text.trim().split('\n').map(l => l.trim()).filter(l => l);
+  if (lines.length < 2) return { error: 'CSV file is empty or has no data rows.' };
+
+  // Detect if first row is a header — skip it if it contains text like "date"
+  const firstRow = lines[0].toLowerCase();
+  const hasHeader = firstRow.includes('date') || firstRow.includes('description') || firstRow.includes('amount');
+  const dataLines = hasHeader ? lines.slice(1) : lines;
+
+  if (!dataLines.length) return { error: 'No data rows found after the header.' };
+
+  const rows = [];
+  const errors = [];
+
+  dataLines.forEach((line, i) => {
+    // Handle quoted commas
+    const cols = line.match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g) || [];
+    const cleaned = cols.map(c => c.replace(/^"|"$/g, '').trim());
+
+    if (cleaned.length < 6) {
+      errors.push(`Row ${i + 2}: only ${cleaned.length} columns found (need 6).`);
+      return;
+    }
+
+    const [date, description, type, category, amount, status] = cleaned;
+
+    // Validate type
+    const normalType = type.toLowerCase();
+    if (normalType !== 'income' && normalType !== 'expense') {
+      errors.push(`Row ${i + 2}: type must be "income" or "expense", got "${type}".`);
+      return;
+    }
+
+    // Validate amount
+    const parsedAmount = parseFloat(amount.replace(/[^0-9.]/g, ''));
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      errors.push(`Row ${i + 2}: invalid amount "${amount}".`);
+      return;
+    }
+
+    // Validate date
+    if (isNaN(Date.parse(date))) {
+      errors.push(`Row ${i + 2}: invalid date "${date}". Use YYYY-MM-DD format.`);
+      return;
+    }
+
+    rows.push({
+      date:        date.slice(0, 10), // ensure YYYY-MM-DD
+      description: description || 'Unnamed',
+      type:        normalType,
+      category:    category   || 'Misc',
+      amount:      parsedAmount,
+      status:      status.toLowerCase() || 'completed'
+    });
+  });
+
+  if (errors.length && !rows.length) {
+    return { error: errors.slice(0, 3).join(' ') };
+  }
+
+  return { rows };
+}
+
+/* Render preview table */
+function renderCsvPreview(rows) {
+  const tbody = document.getElementById('csv-preview-body');
+  if (!tbody) return;
+  tbody.innerHTML = rows.map(t => {
+    const sign   = t.type === 'income' ? '+' : '-';
+    const amount = TXN_CONFIG.currency + t.amount.toLocaleString(TXN_CONFIG.locale);
+    return `
+      <tr>
+        <td style="color:var(--text-muted);font-size:12.5px;">${t.date}</td>
+        <td><div style="font-weight:600;">${t.description}</div></td>
+        <td><span class="type-badge ${t.type}">${cap(t.type)}</span></td>
+        <td style="color:var(--text-muted);">${t.category}</td>
+        <td><span class="txn-amount ${t.type}">${sign}${amount}</span></td>
+        <td><span class="status-badge ${t.status}">${cap(t.status)}</span></td>
+      </tr>`;
+  }).join('');
+}
+
+/* Import all parsed rows to backend */
+async function importCsv() {
+  if (!csvParsedData.length) return;
+
+  setLoading('btn-csv-import', true);
+
+  let successCount = 0;
+  let failCount    = 0;
+
+  for (const record of csvParsedData) {
+    try {
+      await fetch(`${API}/transactions`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(record)
+      });
+      successCount++;
+    } catch (err) {
+      // Backend not available — add to DOM only
+      allTransactions.unshift(record);
+      successCount++;
+    }
+  }
+
+  setLoading('btn-csv-import', false);
+  closeCsvModal();
+  await loadTransactions();
+
+  if (failCount === 0) {
+    showToast(`✓ ${successCount} transactions imported successfully`, 'success');
+  } else {
+    showToast(`${successCount} imported, ${failCount} failed`, 'error');
+  }
+}
+
+/* Clear selected file */
+function clearCsv() {
+  csvParsedData = [];
+  const fileInput = document.getElementById('csv-file-input');
+  if (fileInput) fileInput.value = '';
+  showEl('csv-file-info',    false);
+  showEl('csv-preview-wrap', false);
+  showEl('csv-error-box',    false);
+  setCsvImportBtn(false);
+}
+
+/* Show error in CSV modal */
+function showCsvError(msg) {
+  setText('csv-error-msg', msg);
+  showEl('csv-error-box', true);
+}
+
+/* Enable/disable import button */
+function setCsvImportBtn(enabled) {
+  const btn = document.getElementById('btn-csv-import');
+  if (!btn) return;
+  btn.disabled      = !enabled;
+  btn.style.opacity = enabled ? '1' : '0.4';
+  btn.style.cursor  = enabled ? 'pointer' : 'not-allowed';
+}
+
+
 /* ── Field Error Helpers ──────────────────────────────────── */
 
 function showFieldError(id, show) {
@@ -361,3 +606,4 @@ function getValue(id)     { return document.getElementById(id)?.value || ''; }
 function setValue(id, val){ const el = document.getElementById(id); if (el) el.value = val; }
 function openOverlay(id)  { document.getElementById(id)?.classList.add('open'); }
 function closeOverlay(id) { document.getElementById(id)?.classList.remove('open'); }
+function showEl(id, show) { const el = document.getElementById(id); if (el) el.style.display = show ? 'block' : 'none'; }

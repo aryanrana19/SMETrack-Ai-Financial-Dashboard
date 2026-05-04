@@ -28,9 +28,9 @@ const DASH_CONFIG = {
 /* ── User ─────────────────────────────────────────────────── */
 
 const USER = {
-  name:     'Riya Sharma',
+  name:     'Aryan Rana',
   role:     'Business Owner',
-  initials: 'RS'
+  initials: 'AR'
 };
 
 

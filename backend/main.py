@@ -66,3 +66,24 @@ def delete_transaction(txn_id: int, db: Session = Depends(get_db)):
     db.delete(txn)
     db.commit()
     return {"message": "Deleted successfully"}
+
+# ── ML imports (add at top of main.py with other imports) ──
+from ml import forecast_cashflow, investment_readiness_score
+
+
+# ── GET Forecast ────────────────────────────────────────────
+@app.get("/forecast")
+def get_forecast(horizon: int = 3, db: Session = Depends(get_db)):
+    transactions = db.query(models.Transaction).all()
+    if not transactions:
+        return { "error": "No transactions found" }
+    return forecast_cashflow(transactions, horizon)
+
+
+# ── GET Investment Readiness Score ──────────────────────────
+@app.get("/score")
+def get_score(db: Session = Depends(get_db)):
+    transactions = db.query(models.Transaction).all()
+    if not transactions:
+        return { "error": "No transactions found" }
+    return investment_readiness_score(transactions)

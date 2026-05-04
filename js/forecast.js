@@ -1,6 +1,7 @@
 /* ============================================================
    SMETrack – forecast.js
    Depends on: main.js (load first)
+   API constant is defined in main.js — do NOT redefine here.
 ============================================================ */
 
 /* ── Config ───────────────────────────────────────────────── */
@@ -26,8 +27,29 @@ const FC_CONFIG = {
   sim: { incomeGrowth: 5, expenseChange: 0, investment: 0, recurring: 0 }
 };
 
-/* ── Backend URL ──────────────────────────────────────────── */
-const API = 'http://127.0.0.1:8000';
+
+/* ── User — must match dashboard.js USER object ──────────── */
+
+const FC_USER = {
+  name:     'Aryan Rana',
+  role:     'Business Owner',
+  initials: 'AR'
+};
+
+function renderFcUser() {
+  const ids = {
+    'sidebar-name':   FC_USER.name,
+    'sidebar-role':   FC_USER.role,
+    'sidebar-avatar': FC_USER.initials,
+    'topbar-name':    FC_USER.name,
+    'topbar-role':    FC_USER.role,
+    'topbar-avatar':  FC_USER.initials,
+  };
+  Object.entries(ids).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  });
+}
 
 
 /* ── State ────────────────────────────────────────────────── */
@@ -35,8 +57,14 @@ const API = 'http://127.0.0.1:8000';
 let currentHorizon = 3;
 let forecastChart  = null;
 
-// ACTUAL gets populated from backend on load
+// Populated from /forecast endpoint
 const ACTUAL = {
+  income:  [],
+  expense: []
+};
+
+// ML baseline predictions from backend
+let ML_BASELINE = {
   income:  [],
   expense: []
 };
@@ -45,44 +73,93 @@ const ACTUAL = {
 /* ── Init ─────────────────────────────────────────────────── */
 
 document.addEventListener('DOMContentLoaded', async () => {
+  renderFcUser();
   await loadForecastData();
+  await loadHealthScore();
 });
 
 
-/* ── Load Data From Backend ───────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   FETCH FROM ML BACKEND ENDPOINTS
+══════════════════════════════════════════════════════════ */
+
+/* ── Load forecast from /forecast endpoint ────────────────── */
 
 async function loadForecastData() {
   try {
-    const res  = await fetch(`${API}/transactions`);
+    const res  = await fetch(`${API}/forecast?horizon=${currentHorizon}`);
     const data = await res.json();
 
-    if (!data.length) return;
+    if (data.error) {
+      console.warn('Forecast API:', data.error);
+      return;
+    }
 
-    // Build monthly arrays from transactions (same logic as dashboard)
-    ACTUAL.income  = buildMonthlyTotals(data, 'income');
-    ACTUAL.expense = buildMonthlyTotals(data, 'expense');
+    // Store actuals
+    ACTUAL.income  = data.actual_income  || [];
+    ACTUAL.expense = data.actual_expense || [];
 
-    buildForecast(currentHorizon);
-    animateHealthScore();
+    // Store ML baseline predictions
+    ML_BASELINE.income  = data.predicted_income  || [];
+    ML_BASELINE.expense = data.predicted_expense || [];
+
+    renderForecastFromML(currentHorizon);
 
   } catch (err) {
-    // Backend not running — do nothing, page stays empty
+    console.warn('Backend not reachable for forecast:', err);
   }
 }
 
 
-/* ── Build Monthly Totals From Transactions ───────────────── */
+/* ── Load score from /score endpoint ──────────────────────── */
 
-function buildMonthlyTotals(transactions, type) {
-  const filtered = transactions.filter(t => t.type === type);
+async function loadHealthScore() {
+  try {
+    const res  = await fetch(`${API}/score`);
+    const data = await res.json();
 
-  const map = {};
-  filtered.forEach(t => {
-    const key = t.date.slice(0, 7); // 'YYYY-MM'
-    map[key] = (map[key] || 0) + t.amount;
-  });
+    if (data.error) {
+      console.warn('Score API:', data.error);
+      return;
+    }
 
-  return Object.keys(map).sort().map(k => Math.round(map[k]));
+    renderHealthScore(data);
+
+  } catch (err) {
+    console.warn('Backend not reachable for score:', err);
+  }
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   RENDER FROM ML DATA
+══════════════════════════════════════════════════════════ */
+
+/* ── Render forecast using ML baseline + slider adjustments ── */
+
+function renderForecastFromML(horizon) {
+  if (!ACTUAL.income.length || !ML_BASELINE.income.length) return;
+
+  // Slider adjustments on top of ML baseline
+  const incomeGrowth  = 1 + getSlider('slider-income-growth',  FC_CONFIG.sim.incomeGrowth)  / 100;
+  const expenseChange = 1 + getSlider('slider-expense-change', FC_CONFIG.sim.expenseChange) / 100;
+  const investment    =     getSlider('slider-investment',     FC_CONFIG.sim.investment);
+  const recurring     =     getSlider('slider-recurring',      FC_CONFIG.sim.recurring);
+
+  // Apply slider multipliers on top of ML predictions
+  const projIncome  = ML_BASELINE.income.slice(0, horizon).map(
+    (v, i) => Math.round(v * Math.pow(incomeGrowth, i + 1))
+  );
+  const projExpense = ML_BASELINE.expense.slice(0, horizon).map(
+    (v, i) => Math.round(v * Math.pow(expenseChange, i + 1) + recurring + (i === 0 ? investment : 0))
+  );
+
+  const actualMonths = FC_CONFIG.months.slice(0, ACTUAL.income.length);
+  const projMonths   = FC_CONFIG.months.slice(ACTUAL.income.length, ACTUAL.income.length + horizon);
+
+  updateFcCards(projIncome, projExpense, horizon);
+  renderForecastChart(actualMonths, projMonths, projIncome, projExpense, horizon);
+  updateSimResult(projIncome, projExpense);
 }
 
 
@@ -92,39 +169,26 @@ function setHorizon(months, btn) {
   currentHorizon = months;
   document.querySelectorAll('.topbar-right .filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  buildForecast(months);
+  // Re-fetch ML predictions for new horizon
+  loadForecastData();
 }
 
 
-/* ── Core Forecast Engine ─────────────────────────────────── */
+/* ── Simulator slider update ──────────────────────────────── */
 
-function buildForecast(horizon) {
-  if (!ACTUAL.income.length || !ACTUAL.expense.length) return;
+function updateSim() {
+  const ig = getSlider('slider-income-growth',  0);
+  const ec = getSlider('slider-expense-change', 0);
+  const iv = getSlider('slider-investment',     0);
+  const rc = getSlider('slider-recurring',      0);
 
-  const lastIncome  = ACTUAL.income[ACTUAL.income.length - 1];
-  const lastExpense = ACTUAL.expense[ACTUAL.expense.length - 1];
+  setText('val-income-growth',  (ig >= 0 ? '+' : '') + ig + '%');
+  setText('val-expense-change', (ec >= 0 ? '+' : '') + ec + '%');
+  setText('val-investment',     fmtCurrency(iv));
+  setText('val-recurring',      fmtCurrency(rc) + '/mo');
 
-  const incomeGrowth  = 1 + getSlider('slider-income-growth',  FC_CONFIG.sim.incomeGrowth)  / 100;
-  const expenseChange = 1 + getSlider('slider-expense-change', FC_CONFIG.sim.expenseChange) / 100;
-  const investment    =     getSlider('slider-investment',     FC_CONFIG.sim.investment);
-  const recurring     =     getSlider('slider-recurring',      FC_CONFIG.sim.recurring);
-
-  const projIncome  = [];
-  const projExpense = [];
-
-  for (let i = 0; i < horizon; i++) {
-    projIncome.push(Math.round(lastIncome * Math.pow(incomeGrowth, i + 1)));
-    projExpense.push(Math.round(
-      lastExpense * Math.pow(expenseChange, i + 1) + recurring + (i === 0 ? investment : 0)
-    ));
-  }
-
-  const actualMonths = FC_CONFIG.months.slice(0, ACTUAL.income.length);
-  const projMonths   = FC_CONFIG.months.slice(ACTUAL.income.length, ACTUAL.income.length + horizon);
-
-  updateFcCards(projIncome, projExpense, horizon);
-  renderForecastChart(actualMonths, projMonths, projIncome, projExpense, horizon);
-  updateSimResult(projIncome, projExpense);
+  // Re-render with updated sliders on top of ML baseline
+  renderForecastFromML(currentHorizon);
 }
 
 
@@ -149,7 +213,7 @@ function updateFcCards(projIncome, projExpense, horizon) {
     growthEl.style.color = growth >= 0 ? '#16A34A' : '#DC2626';
   }
 
-  const label = `Next ${horizon} month${horizon > 1 ? 's' : ''}`;
+  const label = `Next ${horizon} month${horizon > 1 ? 's' : ''} · ML forecast`;
   ['fc-income-sub','fc-expense-sub','fc-net-sub'].forEach(id => setText(id, label));
 }
 
@@ -181,9 +245,9 @@ function renderForecastChart(actualMonths, projMonths, projIncome, projExpense, 
       labels,
       datasets: [
         { label:'Actual Income',      data:incomeActual,  borderColor:FC_CONFIG.chart.incomeColor,  borderWidth:2.5, pointRadius:4, pointHoverRadius:6, pointBackgroundColor:FC_CONFIG.chart.incomeColor,  fill:false, tension:0.4 },
-        { label:'Projected Income',   data:incomeProj,    borderColor:FC_CONFIG.chart.incomeColor,  borderWidth:2,   pointRadius:4, pointHoverRadius:6, pointBackgroundColor:'#fff', pointBorderColor:FC_CONFIG.chart.incomeColor,  borderDash:[6,4], fill:false, tension:0.4 },
+        { label:'ML Projected Income',   data:incomeProj, borderColor:FC_CONFIG.chart.incomeColor,  borderWidth:2,   pointRadius:4, pointHoverRadius:6, pointBackgroundColor:'#fff', pointBorderColor:FC_CONFIG.chart.incomeColor,  borderDash:[6,4], fill:false, tension:0.4 },
         { label:'Actual Expenses',    data:expenseActual, borderColor:FC_CONFIG.chart.expenseColor, borderWidth:2.5, pointRadius:4, pointHoverRadius:6, pointBackgroundColor:FC_CONFIG.chart.expenseColor, fill:false, tension:0.4 },
-        { label:'Projected Expenses', data:expenseProj,   borderColor:FC_CONFIG.chart.expenseColor, borderWidth:2,   pointRadius:4, pointHoverRadius:6, pointBackgroundColor:'#fff', pointBorderColor:FC_CONFIG.chart.expenseColor, borderDash:[6,4], fill:false, tension:0.4 },
+        { label:'ML Projected Expenses', data:expenseProj, borderColor:FC_CONFIG.chart.expenseColor, borderWidth:2,  pointRadius:4, pointHoverRadius:6, pointBackgroundColor:'#fff', pointBorderColor:FC_CONFIG.chart.expenseColor, borderDash:[6,4], fill:false, tension:0.4 },
         { label:'Net Cash Flow',      data:netFlow,       borderColor:FC_CONFIG.chart.netColor,     borderWidth:2,   pointRadius:0, backgroundColor:FC_CONFIG.chart.netBg, fill:true, tension:0.4 }
       ]
     },
@@ -214,27 +278,15 @@ function renderForecastChart(actualMonths, projMonths, projIncome, projExpense, 
     }
   });
 
-  setText('chart-subtitle', `Projected income & expenses · Next ${horizon} months`);
+  setText('chart-subtitle', `ML-powered forecast · Next ${horizon} months`);
 }
 
 
-/* ── Simulator ────────────────────────────────────────────── */
-
-function updateSim() {
-  const ig = getSlider('slider-income-growth',  0);
-  const ec = getSlider('slider-expense-change', 0);
-  const iv = getSlider('slider-investment',     0);
-  const rc = getSlider('slider-recurring',      0);
-
-  setText('val-income-growth',  (ig >= 0 ? '+' : '') + ig + '%');
-  setText('val-expense-change', (ec >= 0 ? '+' : '') + ec + '%');
-  setText('val-investment',     fmtCurrency(iv));
-  setText('val-recurring',      fmtCurrency(rc) + '/mo');
-
-  buildForecast(currentHorizon);
-}
+/* ── Simulator Result ─────────────────────────────────────── */
 
 function updateSimResult(projIncome, projExpense) {
+  if (!ACTUAL.income.length) return;
+
   const baseNet = (ACTUAL.income[ACTUAL.income.length - 1] - ACTUAL.expense[ACTUAL.expense.length - 1]) * currentHorizon;
   const simNet  = sumArr(projIncome) - sumArr(projExpense);
   const impact  = simNet - baseNet;
@@ -272,8 +324,8 @@ function updateSimResult(projIncome, projExpense) {
     else if (ig >= 15)     msg = '🚀 High income growth projected. Ensure operations can scale.';
     else if (iv > 100000)  msg = '💡 Large one-time investment. Check your cash reserves first.';
     else if (rc > 30000)   msg = '📊 High recurring expense added. Monitor cash flow carefully.';
-    else if (impact > 0)   msg = '✅ Scenario improves your baseline. Good time to act.';
-    else                   msg = '📈 Stable scenario. Adjust sliders to explore strategies.';
+    else if (impact > 0)   msg = '✅ ML baseline improved by simulator. Good time to act.';
+    else                   msg = '📈 Stable scenario. Adjust sliders to explore what-if strategies.';
     insightEl.textContent = msg;
     insightEl.classList.add('visible');
   }
@@ -290,38 +342,15 @@ function resetSimulator() {
 }
 
 
-/* ── Health Score ─────────────────────────────────────────── */
+/* ── Render Health Score from /score API ──────────────────── */
 
-function animateHealthScore() {
-  if (!ACTUAL.income.length) return;
-
-  const income  = ACTUAL.income;
-  const expense = ACTUAL.expense;
-  const nets    = income.map((v, i) => v - expense[i]);
-  const avg     = sumArr(nets) / nets.length;
-
-  // 1. Cash Flow Stability /25
-  const variance  = nets.reduce((s, v) => s + Math.pow(v - avg, 2), 0) / nets.length;
-  const cv        = Math.sqrt(variance) / avg;
-  const cashflow  = Math.round(Math.max(0, Math.min(25, 25 * (1 - Math.min(cv, 1)))));
-
-  // 2. Profit Margin /25
-  const lastMargin  = (income[income.length-1] - expense[expense.length-1]) / income[income.length-1];
-  const marginScore = Math.round(Math.max(0, Math.min(25, lastMargin * 60)));
-
-  // 3. Revenue Growth /25
-  let gSum = 0;
-  for (let i = 1; i < income.length; i++) gSum += (income[i] - income[i-1]) / income[i-1];
-  const avgGrowth   = gSum / (income.length - 1);
-  const growthScore = Math.round(Math.max(0, Math.min(25, avgGrowth * 200)));
-
-  // 4. Expense Control /25
-  let eSum = 0;
-  for (let i = 1; i < expense.length; i++) eSum += (expense[i] - expense[i-1]) / expense[i-1];
-  const avgExpGrowth  = eSum / (expense.length - 1);
-  const expenseScore  = Math.round(Math.max(0, Math.min(25, (avgGrowth - avgExpGrowth + 0.05) * 200)));
-
-  const total = cashflow + marginScore + growthScore + expenseScore;
+function renderHealthScore(data) {
+  const total       = data.score || 0;
+  const breakdown   = data.breakdown || {};
+  const cashflow    = breakdown.cashflow_stability || 0;
+  const margin      = breakdown.profit_margin      || 0;
+  const growth      = breakdown.revenue_growth     || 0;
+  const expense     = breakdown.expense_control    || 0;
 
   setTimeout(() => {
     const arc = document.getElementById('score-arc');
@@ -336,20 +365,20 @@ function animateHealthScore() {
       const badge = document.getElementById('score-badge');
       if (!badge) return;
       let label, cls;
-      if      (total >= 80) { label = '🏆 Excellent – Investment Ready'; cls = 'excellent'; }
-      else if (total >= 60) { label = '✅ Good – Mostly Healthy';        cls = 'good';      }
-      else if (total >= 40) { label = '⚠️ Fair – Needs Improvement';     cls = 'fair';      }
-      else                  { label = '❌ Poor – High Risk';              cls = 'poor';      }
+      if      (total >= 80) { label = '🏆 ' + data.label; cls = 'excellent'; }
+      else if (total >= 60) { label = '✅ ' + data.label; cls = 'good';      }
+      else if (total >= 40) { label = '⚠️ ' + data.label; cls = 'fair';      }
+      else                  { label = '❌ ' + data.label; cls = 'poor';      }
       badge.textContent = label;
       badge.className   = 'score-badge ' + cls;
     }, 800);
 
-    animBar('ind-cashflow', 'fill-cashflow', cashflow,    25);
-    animBar('ind-margin',   'fill-margin',   marginScore, 25);
-    animBar('ind-growth',   'fill-growth',   growthScore, 25);
-    animBar('ind-expense',  'fill-expense',  expenseScore,25);
+    animBar('ind-cashflow', 'fill-cashflow', cashflow, 25);
+    animBar('ind-margin',   'fill-margin',   margin,   25);
+    animBar('ind-growth',   'fill-growth',   growth,   25);
+    animBar('ind-expense',  'fill-expense',  expense,  25);
 
-    renderRecs(total, cashflow, marginScore, growthScore, expenseScore);
+    renderRecs(total, cashflow, margin, growth, expense);
 
   }, FC_CONFIG.animation.scoreDelay);
 }

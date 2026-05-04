@@ -10,7 +10,7 @@
 </head>
 <body class="app-body">
 
-<!-- SIDEBAR (same across all pages) -->
+<!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-brand">
     <div class="brand-icon">
@@ -56,17 +56,16 @@
 
   <div class="sidebar-footer">
     <div class="sidebar-user">
-      <div class="user-avatar">JS</div>
+      <div class="user-avatar" id="sidebar-avatar"></div>
       <div class="user-info">
-        <div class="user-name">Jane Smith</div>
-        <div class="user-role">Business Owner</div>
+        <div class="user-name" id="sidebar-name"></div>
+        <div class="user-role" id="sidebar-role"></div>
       </div>
     </div>
   </div>
 </aside>
 
 <!-- MAIN CONTENT -->
-
 <div class="main-wrap">
 
   <!-- TOP NAVBAR -->
@@ -81,14 +80,25 @@
       </div>
     </div>
     <div class="topbar-right">
+
+      <!-- CSV Upload Button -->
+      <button class="btn-csv" onclick="openCsvModal()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+        </svg>
+        Import CSV
+      </button>
+
+      <!-- Add Transaction Button -->
       <button class="btn-primary" id="btn-add-txn" onclick="openModal()" style="width:auto; height:38px; padding:0 18px; font-size:13px; margin-top:0; border-radius:10px;">
         <span class="btn-text">+ Add Transaction</span>
       </button>
+
       <div class="topbar-user">
-        <div class="topbar-avatar">JS</div>
+        <div class="topbar-avatar" id="topbar-avatar"></div>
         <div class="topbar-user-info">
-          <span class="topbar-user-name">Jane Smith</span>
-          <span class="topbar-user-role">Business Owner</span>
+          <span class="topbar-user-name" id="topbar-name"></span>
+          <span class="topbar-user-role" id="topbar-role"></span>
         </div>
       </div>
     </div>
@@ -105,7 +115,6 @@
           <div class="kpi-icon kpi-icon--income">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           </div>
-          <span class="kpi-trend up"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>8.3%</span>
         </div>
         <div class="kpi-value" id="summary-income">₹0</div>
         <div class="kpi-label">Total Income</div>
@@ -117,7 +126,6 @@
           <div class="kpi-icon kpi-icon--expense">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
           </div>
-          <span class="kpi-trend down"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>2.1%</span>
         </div>
         <div class="kpi-value" id="summary-expense">₹0</div>
         <div class="kpi-label">Total Expenses</div>
@@ -129,7 +137,6 @@
           <div class="kpi-icon kpi-icon--profit">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
           </div>
-          <span class="kpi-trend up"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>14.5%</span>
         </div>
         <div class="kpi-value" id="summary-net">₹0</div>
         <div class="kpi-label">Net Balance</div>
@@ -141,7 +148,6 @@
           <div class="kpi-icon kpi-icon--savings">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
           </div>
-          <span class="kpi-trend up"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>5%</span>
         </div>
         <div class="kpi-value" id="summary-pending">₹0</div>
         <div class="kpi-label">Pending Amount</div>
@@ -150,22 +156,21 @@
 
     </section>
 
-    <!-- ── FILTERS + TABLE ────────────────────────────── -->
+    <!-- FILTERS + TABLE -->
     <section class="txn-section animate-in" style="--delay:0.15s">
 
-      <!-- Toolbar -->
       <div class="txn-toolbar">
         <div class="search-wrap">
           <span class="search-icon">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
           </span>
-          <input type="text" id="search-input" placeholder="Search by description or category…" oninput="applyFilters()"/>
+          <input type="text" id="search-input" placeholder="Search transactions…" oninput="applyFilters()"/>
         </div>
 
         <div class="filter-group">
-          <button class="filter-btn active" data-filter="all"    onclick="setFilter('all',this)">All</button>
-          <button class="filter-btn"        data-filter="income" onclick="setFilter('income',this)">Income</button>
-          <button class="filter-btn"        data-filter="expense" onclick="setFilter('expense',this)">Expense</button>
+          <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+          <button class="filter-btn" onclick="setFilter('income', this)">Income</button>
+          <button class="filter-btn" onclick="setFilter('expense', this)">Expense</button>
         </div>
 
         <select class="filter-select" id="category-filter" onchange="applyFilters()">
@@ -177,6 +182,9 @@
           <option>Marketing</option>
           <option>Payroll</option>
           <option>Utilities</option>
+          <option>Raw Materials</option>
+          <option>Shipping</option>
+          <option>Grant</option>
           <option>Misc</option>
         </select>
 
@@ -211,14 +219,16 @@
         </div>
       </div>
 
-      <!-- Pagination -->
       <div class="pagination" id="pagination"></div>
 
     </section>
   </main>
 </div>
 
-<!-- ADD / EDIT MODAL -->
+
+<!-- ══════════════════════════════════════
+     ADD / EDIT MODAL
+══════════════════════════════════════ -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal" id="modal">
     <div class="modal-header">
@@ -286,6 +296,9 @@
               <option>Marketing</option>
               <option>Payroll</option>
               <option>Utilities</option>
+              <option>Raw Materials</option>
+              <option>Shipping</option>
+              <option>Grant</option>
               <option>Misc</option>
             </select>
           </div>
@@ -317,7 +330,92 @@
   </div>
 </div>
 
-<!-- Delete Confirm Modal -->
+
+<!-- ══════════════════════════════════════
+     CSV UPLOAD MODAL
+══════════════════════════════════════ -->
+<div class="modal-overlay" id="csv-overlay" onclick="closeCsvOutside(event)">
+  <div class="modal csv-modal" id="csv-modal">
+
+    <div class="modal-header">
+      <div class="modal-title">Import CSV</div>
+      <button class="modal-close" onclick="closeCsvModal()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- Format hint -->
+      <div class="csv-hint">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>CSV must have these columns in order: <strong>date, description, type, category, amount, status</strong></span>
+      </div>
+
+      <!-- Drop zone -->
+      <div class="csv-dropzone" id="csv-dropzone"
+           ondragover="csvDragOver(event)"
+           ondragleave="csvDragLeave(event)"
+           ondrop="csvDrop(event)"
+           onclick="document.getElementById('csv-file-input').click()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+        </svg>
+        <p class="csv-drop-title">Drop your CSV file here</p>
+        <p class="csv-drop-sub">or click to browse</p>
+        <input type="file" id="csv-file-input" accept=".csv" style="display:none" onchange="csvFileSelected(event)"/>
+      </div>
+
+      <!-- File selected indicator -->
+      <div class="csv-file-info" id="csv-file-info" style="display:none;">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span id="csv-file-name">file.csv</span>
+        <span class="csv-row-count" id="csv-row-count"></span>
+        <button class="csv-clear-btn" onclick="clearCsv()">✕</button>
+      </div>
+
+      <!-- Preview table -->
+      <div class="csv-preview-wrap" id="csv-preview-wrap" style="display:none;">
+        <div class="csv-preview-label">Preview <span id="csv-preview-count"></span></div>
+        <div class="table-wrap csv-preview-table-wrap">
+          <table class="txn-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Type</th>
+                <th>Category</th>
+                <th>Amount</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="csv-preview-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Error box -->
+      <div class="csv-error-box" id="csv-error-box" style="display:none;">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span id="csv-error-msg"></span>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeCsvModal()">Cancel</button>
+      <button class="btn-primary" id="btn-csv-import" onclick="importCsv()" disabled
+        style="width:auto; height:42px; padding:0 24px; font-size:14px; margin-top:0; border-radius:10px; opacity:0.4; cursor:not-allowed;">
+        <div class="spinner"></div>
+        <span class="btn-text">Import Transactions</span>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- DELETE MODAL -->
 <div class="modal-overlay" id="del-overlay" onclick="closeDeleteOutside(event)">
   <div class="modal modal--sm" id="del-modal">
     <div class="del-icon">
@@ -335,7 +433,6 @@
 <div class="toast" id="toast"></div>
 
 <script src="js/main.js"></script>
-<script src="js/dashboard.js"></script>
 <script src="js/transactions.js"></script>
 </body>
 </html>
