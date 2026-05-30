@@ -1,8 +1,4 @@
-/* ============================================================
-   SMETrack – main.js
-   Global utilities shared across all pages.
-   Load this BEFORE any page-specific JS file.
-============================================================ */
+
 
 /* ── Backend URL – declared ONCE here for all pages ──────── */
 const API = 'http://127.0.0.1:8000';

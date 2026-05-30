@@ -1,8 +1,3 @@
-/* ============================================================
-   SMETrack – dashboard.js
-   Depends on: main.js (load first)
-   API constant is defined in main.js — do NOT redefine here.
-============================================================ */
 
 /* ── Config ───────────────────────────────────────────────── */
 

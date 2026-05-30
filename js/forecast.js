@@ -1,8 +1,3 @@
-/* ============================================================
-   SMETrack – forecast.js
-   Depends on: main.js (load first)
-   API constant is defined in main.js — do NOT redefine here.
-============================================================ */
 
 /* ── Config ───────────────────────────────────────────────── */
 
@@ -28,7 +23,6 @@ const FC_CONFIG = {
 };
 
 
-/* ── User — must match dashboard.js USER object ──────────── */
 
 const FC_USER = {
   name:     'Aryan Rana',
@@ -79,12 +73,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-/* ══════════════════════════════════════════════════════════
-   FETCH FROM ML BACKEND ENDPOINTS
-══════════════════════════════════════════════════════════ */
-
-/* ── Load forecast from /forecast endpoint ────────────────── */
-
 async function loadForecastData() {
   try {
     const res  = await fetch(`${API}/forecast?horizon=${currentHorizon}`);
@@ -131,11 +119,8 @@ async function loadHealthScore() {
 }
 
 
-/* ══════════════════════════════════════════════════════════
-   RENDER FROM ML DATA
-══════════════════════════════════════════════════════════ */
 
-/* ── Render forecast using ML baseline + slider adjustments ── */
+/* ── Render forecast using ML baseline ── */
 
 function renderForecastFromML(horizon) {
   if (!ACTUAL.income.length || !ML_BASELINE.income.length) return;

@@ -1,6 +1,3 @@
-# ml.py
-# All ML logic for SMETrack
-# Models: Linear Regression (forecast) + Random Forest (health score)
 
 import numpy as np
 from sklearn.linear_model import LinearRegression
@@ -161,8 +158,6 @@ def investment_readiness_score(transactions):
     cf_score = round(max(0, min(25, 25 * (1 - min(cv, 1)))))
 
     # ── Train Random Forest on these 4 features ──────────────
-    # We generate synthetic training data based on financial rules
-    # This is realistic for projects without large labeled datasets
     np.random.seed(42)
     n_samples = 500
 

@@ -352,10 +352,6 @@ async function confirmDelete() {
 }
 
 
-/* ══════════════════════════════════════════════════════════
-   CSV IMPORT
-══════════════════════════════════════════════════════════ */
-
 function openCsvModal() {
   csvParsedData = [];
   resetCsvModal();

@@ -1,5 +1,3 @@
-# main.py
-# The actual API server — run this file to start the backend
 
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -67,7 +65,6 @@ def delete_transaction(txn_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Deleted successfully"}
 
-# ── ML imports (add at top of main.py with other imports) ──
 from ml import forecast_cashflow, investment_readiness_score
 
 
